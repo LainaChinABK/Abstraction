@@ -95,6 +95,7 @@ void UDoorInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		}
 	}
 
+	// this line could probably go somewhere else
 	rotating = false;
 }
 

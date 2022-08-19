@@ -23,7 +23,8 @@ void UDoorInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	StartRotation = GetOwner()->GetActorRotation();
-	FinalRotation = GetOwner()->GetActorRotation() + DesiredRotation;
+	FrontTriggerFinalRotation = GetOwner()->GetActorRotation() + DesiredRotation;
+	BackTriggerFinalRotation = GetOwner()->GetActorRotation() + DesiredRotation.Add(0.0f, 180.0f, 0.0f);
 	CurrentRotationTime = 0.0f;
 	
 }
@@ -34,20 +35,66 @@ void UDoorInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (CurrentRotationTime >= TimeToRotate)
+	{
+		CurrentRotationTime = TimeToRotate - DeltaTime;
+	}
+	if (CurrentRotationTime < 0.0f)
+	{
+		CurrentRotationTime = 0.0f;
+	}
+
 	if (CurrentRotationTime < TimeToRotate)
 	{
-		if (TriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
+		if (FrontTriggerBox || BackTriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
 		{
 			APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-			if (PlayerPawn && TriggerBox->IsOverlappingActor(PlayerPawn))
+			FRotator FinalRotation = FRotator::ZeroRotator;
+
+			if (PlayerPawn && FrontTriggerBox && FrontTriggerBox->IsOverlappingActor(PlayerPawn))
+			{
+				FinalRotation = FrontTriggerFinalRotation;
+				lastTrigger = 0;
+				rotating = true;
+			}
+
+			else if (PlayerPawn && BackTriggerBox && BackTriggerBox->IsOverlappingActor(PlayerPawn))
+			{
+				FinalRotation = BackTriggerFinalRotation;
+				lastTrigger = 1;
+				rotating = true;
+			}
+
+			// either trigger
+			if (rotating)
 			{
 				CurrentRotationTime += DeltaTime;
 				const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
 				const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+
 				const FRotator CurrentRotation = FMath::Lerp(StartRotation, FinalRotation, RotationAlpha);
 				GetOwner()->SetActorRotation(CurrentRotation);
 			}
+
+			else
+			{
+				CurrentRotationTime -= DeltaTime;
+				const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
+				const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+				if (lastTrigger == 0)
+				{
+					const FRotator CurrentRotation = FMath::Lerp(StartRotation, FrontTriggerFinalRotation, RotationAlpha);
+					GetOwner()->SetActorRotation(CurrentRotation);
+				}
+				else
+				{
+					const FRotator CurrentRotation = FMath::Lerp(StartRotation, BackTriggerFinalRotation, RotationAlpha);
+					GetOwner()->SetActorRotation(CurrentRotation);
+				}
+			}
 		}
 	}
+
+	rotating = false;
 }
 

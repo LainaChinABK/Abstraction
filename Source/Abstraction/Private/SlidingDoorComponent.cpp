@@ -34,20 +34,35 @@ void USlidingDoorComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (CurrentTime >= TravelTime)
+	{
+		CurrentTime = TravelTime - DeltaTime;
+	}
+
+	if (CurrentTime < 0.0f)
+	{
+		CurrentTime = 0.0f;
+	}
+
 	if (CurrentTime < TravelTime)
 	{
-		if (TriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
+		if (TriggerBox && GetWorld() && GetWorld()->GetFirstPlayerController())
 		{
 			APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 			if (PlayerPawn && TriggerBox->IsOverlappingActor(PlayerPawn))
 			{
 				CurrentTime += DeltaTime;
-				const float TimeRatio = FMath::Clamp(CurrentTime / TravelTime, 0.0f, 1.0f);
-				const float Alpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
-
-				const FVector CurrentVector = FMath::Lerp(StartVector, FinalVector, Alpha);
-				GetOwner()->SetActorLocation(CurrentVector);
 			}
+
+			else
+			{
+				CurrentTime -= DeltaTime;
+			}
+			const float TimeRatio = FMath::Clamp(CurrentTime / TravelTime, 0.0f, 1.0f);
+			const float Alpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+
+			const FVector CurrentVector = FMath::Lerp(StartVector, FinalVector, Alpha);
+			GetOwner()->SetActorLocation(CurrentVector);
 		}
 	}
 }

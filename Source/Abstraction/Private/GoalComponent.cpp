@@ -41,6 +41,10 @@ void UGoalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 			APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 			if (PlayerPawn && TriggerBox->IsOverlappingActor(PlayerPawn))
 			{
+				TriggerHit = true;
+			}
+			if (TriggerHit)
+			{
 				CurrentTime += DeltaTime;
 
 				const float TimeRatio = FMath::Clamp(CurrentTime / TravelTime, 0.0f, 1.0f);

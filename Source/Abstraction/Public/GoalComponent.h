@@ -27,7 +27,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere)
-		FVector DesiredPath = FVector::ZeroVector;
+	FVector DesiredPath = FVector::ZeroVector;
 
 	FVector StartVector = FVector::ZeroVector;
 	FVector FinalVector = FVector::ZeroVector;
@@ -39,6 +39,8 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	ATriggerBox* TriggerBox;
+
+	bool TriggerHit = false;
 
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve OpenCurve;
